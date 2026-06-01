@@ -83,3 +83,174 @@ function computeStreak(habitId) {
 function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
+
+// ── DOM References ───────────────────────────────────
+const emptyState     = document.getElementById("empty-state");
+const gridContainer  = document.getElementById("grid-container");
+const gridHeader     = document.getElementById("grid-header");
+const habitList      = document.getElementById("habit-list");
+const weekNavEl      = document.getElementById("week-nav");
+const weekLabelEl    = document.getElementById("week-label");
+const weekRangeEl    = document.getElementById("week-range");
+const jumpTodayBtn   = document.getElementById("jump-today");
+const progressWrap   = document.getElementById("progress-wrap");
+const progressFill   = document.getElementById("progress-fill");
+const progressLabel  = document.getElementById("progress-label");
+const addForm        = document.getElementById("add-form");
+const addInput       = document.getElementById("add-input");
+const openAddBtn     = document.getElementById("open-add-btn");
+const emptyAddBtn    = document.getElementById("empty-add-btn");
+const confirmAddBtn  = document.getElementById("confirm-add");
+const cancelAddBtn   = document.getElementById("cancel-add");
+
+// ── Main Render Function ─────────────────────────────
+function render() {
+  const today = todayKey();
+
+  // Calculate which week to show
+  const baseWeekStart = getWeekStart(new Date());
+  const weekStart = new Date(baseWeekStart);
+  weekStart.setDate(weekStart.getDate() + weekOffset * 7);
+  const days = getWeekDays(weekStart);
+
+  const isCurrent = weekOffset === 0;
+  const isFutureWeek = weekOffset > 0;
+
+  // ── Week nav labels ──
+  weekRangeEl.textContent = getWeekLabel(days);
+  weekLabelEl.textContent = isCurrent ? "This week" : isFutureWeek ? "Future" : "Past";
+  jumpTodayBtn.classList.toggle("hidden", isCurrent);
+
+  // ── Show/hide empty state vs grid ──
+  if (habits.length === 0) {
+    emptyState.classList.remove("hidden");
+    gridContainer.classList.add("hidden");
+    progressWrap.classList.add("hidden");
+    return; // nothing else to render
+  }
+
+  emptyState.classList.add("hidden");
+  gridContainer.classList.remove("hidden");
+
+  // ── Render grid header (day columns) ──
+  renderGridHeader(days, today);
+
+  // ── Render habit rows ──
+  renderHabitRows(days, today, isFutureWeek);
+
+  // ── Render progress bar (current week only) ──
+  if (isCurrent) {
+    renderProgress(days, today);
+    progressWrap.classList.remove("hidden");
+  } else {
+    progressWrap.classList.add("hidden");
+  }
+}
+
+// ── Render Grid Header ───────────────────────────────
+function renderGridHeader(days, today) {
+  // Keep the spacer div, replace the day columns
+  gridHeader.innerHTML = `<div class="grid-header-spacer"></div>`;
+
+  days.forEach((day, i) => {
+    const key = localKey(day);
+    const isToday = key === today;
+
+    const col = document.createElement("div");
+    col.className = "day-col" + (isToday ? " today" : "");
+
+    col.innerHTML = `
+      <span class="day-lbl">${DAYS[i]}</span>
+      <span class="day-num ${isToday ? "today" : ""}">${day.getDate()}</span>
+    `;
+    gridHeader.appendChild(col);
+  });
+}
+
+// ── Render Habit Rows ────────────────────────────────
+function renderHabitRows(days, today, isFutureWeek) {
+  habitList.innerHTML = "";
+
+  habits.forEach(habit => {
+    const streak = computeStreak(habit.id);
+    const flameColor = streak >= 3 ? "var(--fire)" : streak > 0 ? "var(--text-sub)" : "var(--muted)";
+
+    // Build the row
+    const row = document.createElement("div");
+    row.className = "habit-row";
+    row.dataset.id = habit.id;
+
+    // Left side: name + actions + streak
+    const meta = document.createElement("div");
+    meta.className = "habit-meta";
+    meta.innerHTML = `
+      <div class="habit-name-wrap">
+        <span class="habit-name" title="${escHtml(habit.name)}">${escHtml(habit.name)}</span>
+        <div class="habit-actions">
+          <button class="icon-btn rename-btn" data-id="${habit.id}" title="Rename">✎</button>
+          <button class="icon-btn danger delete-btn" data-id="${habit.id}" title="Delete">✕</button>
+        </div>
+      </div>
+      <div class="streak-badge" title="${streak} day streak">
+        <span style="color:${flameColor}">🔥</span>
+        <span style="color:${streak >= 1 ? 'var(--text)' : 'var(--muted)'}">${streak}</span>
+      </div>
+    `;
+    row.appendChild(meta);
+
+    // Right side: 7 cells
+    days.forEach((day, i) => {
+      const key = localKey(day);
+      const checked  = !!(checks[habit.id]?.[key]);
+      const isToday  = key === today;
+      const isFuture = key > today;
+      const isMissed = key < today && !checked;
+
+      const cell = document.createElement("button");
+      cell.className = [
+        "cell",
+        checked  ? "checked"  : "",
+        isToday  ? "today"    : "",
+        isMissed ? "missed"   : "",
+        isFuture ? "future"   : "",
+      ].filter(Boolean).join(" ");
+
+      cell.textContent = checked ? "✓" : "";
+      cell.disabled = isFuture;
+      cell.dataset.id  = habit.id;
+      cell.dataset.key = key;
+      cell.setAttribute("aria-label",
+        `${habit.name} on ${DAYS_FULL[i]}, ${checked ? "done" : "not done"}${isToday ? " (today)" : ""}`
+      );
+      if (!isFuture) cell.setAttribute("aria-pressed", checked);
+
+      row.appendChild(cell);
+    });
+
+    habitList.appendChild(row);
+  });
+}
+
+// ── Render Progress Bar ──────────────────────────────
+function renderProgress(days, today) {
+  const doneDays = days.filter(d => localKey(d) <= today);
+  const total = habits.length * doneDays.length;
+  const done  = habits.reduce((sum, h) =>
+    sum + doneDays.filter(d => checks[h.id]?.[localKey(d)]).length, 0
+  );
+
+  const pct = total > 0 ? (done / total) * 100 : 0;
+  progressFill.style.width = pct + "%";
+  progressLabel.textContent = `${done}/${total} this week`;
+}
+
+// ── Escape HTML (security) ───────────────────────────
+function escHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+render();
