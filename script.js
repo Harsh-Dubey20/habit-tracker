@@ -254,3 +254,116 @@ function escHtml(str) {
 }
 
 render();
+
+// ── Event Listeners ───────────────────────────────────
+
+// Open add form
+function openAddForm() {
+  addForm.classList.remove("hidden");
+  addInput.focus();
+}
+openAddBtn.addEventListener("click", openAddForm);
+emptyAddBtn.addEventListener("click", openAddForm);
+
+// Close add form
+function closeAddForm() {
+  addForm.classList.add("hidden");
+  addInput.value = "";
+}
+cancelAddBtn.addEventListener("click", closeAddForm);
+
+// Confirm add habit
+function addHabit() {
+  const name = addInput.value.trim();
+  if (!name) return;
+  habits.push({ id: uid(), name: name, createdAt: todayKey() });
+  saveToStorage();
+  closeAddForm();
+  render();
+}
+confirmAddBtn.addEventListener("click", addHabit);
+
+// Also add on Enter key
+addInput.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") addHabit();
+  if (e.key === "Escape") closeAddForm();
+});
+
+// ── Cell toggle, rename, delete (event delegation) ───
+// We attach ONE listener to the whole habit list
+// instead of one per cell — more efficient
+habitList.addEventListener("click", function(e) {
+
+  // -- Toggle cell --
+  const cell = e.target.closest(".cell");
+  if (cell && !cell.disabled) {
+    const { id, key } = cell.dataset;
+    if (!checks[id]) checks[id] = {};
+    checks[id][key] = !checks[id][key];
+    saveToStorage();
+    render();
+    return;
+  }
+
+  // -- Delete habit --
+  const deleteBtn = e.target.closest(".delete-btn");
+  if (deleteBtn) {
+    const id = deleteBtn.dataset.id;
+    const habit = habits.find(h => h.id === id);
+    if (!confirm(`Delete "${habit.name}" and all its history?`)) return;
+    habits = habits.filter(h => h.id !== id);
+    delete checks[id];
+    saveToStorage();
+    render();
+    return;
+  }
+
+  // -- Rename habit --
+  const renameBtn = e.target.closest(".rename-btn");
+  if (renameBtn) {
+    const id = renameBtn.dataset.id;
+    const row = renameBtn.closest(".habit-row");
+    const nameSpan = row.querySelector(".habit-name");
+    const currentName = habits.find(h => h.id === id).name;
+
+    // Replace span with input
+    const input = document.createElement("input");
+    input.className = "edit-input";
+    input.value = currentName;
+    input.maxLength = 60;
+    nameSpan.replaceWith(input);
+    input.select();
+
+    function commitRename() {
+      const newName = input.value.trim();
+      if (newName && newName !== currentName) {
+        habits = habits.map(h => h.id === id ? { ...h, name: newName } : h);
+        saveToStorage();
+      }
+      render();
+    }
+
+    input.addEventListener("blur", commitRename);
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") commitRename();
+      if (e.key === "Escape") render(); // cancel
+    });
+    return;
+  }
+});
+
+// ── Week Navigation ───────────────────────────────────
+document.getElementById("prev-week").addEventListener("click", function() {
+  weekOffset--;
+  render();
+});
+
+document.getElementById("next-week").addEventListener("click", function() {
+  weekOffset++;
+  render();
+});
+
+document.getElementById("jump-today").addEventListener("click", function() {
+  weekOffset = 0;
+  render();
+});
