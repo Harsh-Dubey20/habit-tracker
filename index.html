@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Streak — Habit Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon">◈</span>
+        <span class="brand-name">Streak</span>
+      </div>
+      <button class="btn-primary" id="open-add-btn">+ New Habit</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="app-main">
+
+    <!-- WEEK NAVIGATION -->
+    <nav class="week-nav" id="week-nav">
+      <button class="nav-btn" id="prev-week">&#8592;</button>
+      <div class="week-info">
+        <span class="week-label" id="week-label">This week</span>
+        <span class="week-range" id="week-range"></span>
+      </div>
+      <div class="nav-right">
+        <button class="nav-btn" id="next-week">&#8594;</button>
+        <button class="jump-today hidden" id="jump-today">Today</button>
+      </div>
+    </nav>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <span class="progress-label" id="progress-label"></span>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">◫</div>
+      <h2>Nothing to track yet</h2>
+      <p>Add your first habit and start building streaks.</p>
+      <button class="btn-primary" id="empty-add-btn">+ Add a habit</button>
+    </div>
+
+    <!-- HABIT GRID -->
+    <div class="grid-container hidden" id="grid-container">
+
+      <!-- Grid header row (days) -->
+      <div class="grid-header" id="grid-header">
+        <div class="grid-header-spacer"></div>
+        <!-- Day columns filled by JS -->
+      </div>
+
+      <!-- Habit rows filled by JS -->
+      <div class="habit-list" id="habit-list"></div>
+
+    </div>
+
+    <!-- ADD HABIT FORM -->
+    <div class="add-form hidden" id="add-form">
+      <input
+        type="text"
+        class="add-input"
+        id="add-input"
+        placeholder="e.g. Read 30 min, Exercise, Meditate…"
+        maxlength="60"
+        autocomplete="off"
+      />
+      <div class="form-actions">
+        <button class="btn-primary" id="confirm-add">Add</button>
+        <button class="btn-ghost" id="cancel-add">Cancel</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
