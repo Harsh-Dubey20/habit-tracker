@@ -126,9 +126,11 @@ function render() {
     emptyState.classList.remove("hidden");
     gridContainer.classList.add("hidden");
     progressWrap.classList.add("hidden");
+    weekNavEl.classList.add("hidden");
     return; // nothing else to render
   }
 
+  weekNavEl.classList.remove("hidden");
   emptyState.classList.add("hidden");
   gridContainer.classList.remove("hidden");
 
