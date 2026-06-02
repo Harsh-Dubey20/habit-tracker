@@ -1,7 +1,5 @@
-/* ── Google Fonts ───────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap');
 
-/* ── Design Tokens ──────────────────────────────────── */
 :root {
   --bg:          #0e0f11;
   --surface:     #16181c;
@@ -25,7 +23,6 @@
   --mono:        'DM Mono', monospace;
 }
 
-/* ── Reset ──────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: var(--font);
@@ -202,7 +199,7 @@ input  { font-family: inherit; color: inherit; }
   border-bottom: 1px solid var(--border);
   padding: 0 14px;
 }
-.grid-header-spacer { /* empty left cell */ }
+/* .grid-header-spacer { } */
 .day-col {
   display: flex;
   flex-direction: column;
